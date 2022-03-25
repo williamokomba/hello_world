@@ -1,0 +1,821 @@
+---
+title: "week 12 IP with R"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1.0 Defining the Question
+
+A Kenyan entrepreneur has created an online cryptography course and would want to advertise it on her blog. She currently targets audiences originating from various countries. In the past, she ran ads to advertise a related course on the same blog and collected data in the process. She would now like to employ your services as a Data Science Consultant to help her identify which individuals are most likely to click on her ads.
+
+### Data provided
+
+Dataset Url = http://bit.ly/IPAdvertisingData
+
+### Data grossary
+
+ Age
+ 
+ Daily Time spent on site
+ 
+ Area of residence
+ 
+ Internet Usage
+ 
+ Gender
+ 
+ Country of residence
+
+
+## 1.1 Specifying the data analytic
+#
+To find out individuals that are likely to click on a blog advert based on their characteristics
+
+## 1.2 Defining the metric for success
+
+Identify individuals that are likely to click on the add after performing exploratory data analysis
+
+## 1.3 Understanding the Context
+
+A Kenyan entrepreneur has created an online cryptography course and would want to advertise it on her blog. She currently targets audiences originating from various countries. In the past, she ran ads to advertise a related course on the same blog and collected data in the process.
+
+## 1.4 Recording the Experimental
+
+1.Data Loading 
+
+2.Data cleaning for missing values and outliers 
+
+3.Exploratory Data Analysis 
+
+4.Conclusion-Detecting the trend in behavior.
+
+## 1.5 Assessing the Relevance of the Data
+
+The data provided is from the performance of a previous blog advert on the same website. The columns are as follows: Daily Time Spent on the site-Integer, Age-Age of the individual browsing-Integer, Area of residence Internet Usage Gender of the browsing individual Country of Residence
+
+
+## 2.0 Importing package
+```{r}
+#importing libraries
+data.table::update.dev.pkg() # install package data.table to work with data tables
+#
+#loading the library
+library(data.table) # load package
+install.packages(c("Rcpp","tidyverse")) # install packages to work with data frame - extends into visualization
+library(tidyverse)
+```
+observation; This library package installation help us to work with tables and dataframe respectively.
+
+##2.1 Importing dataset
+```{r}
+# Dataset Url = http://bit.ly/IPAdvertisingData
+# Importing our dataset
+# ---
+#
+my_dataset <- read.csv('http://bit.ly/IPAdvertisingData')
+
+# Previewing the dataset
+# ---
+#having a look at the dataset 
+head(my_dataset, 6)
+```
+observation: the dateset has 10 columns.
+
+
+### Previewing the dataset
+```{r}
+#viewing the dataset
+#
+View(my_dataset)
+
+```
+observation: the dataset has 100 records and 10 variables/columns.
+
+### checking the colunms summary
+```{r}
+# checking the content/summary statistics of each column.
+str(my_dataset)
+
+```
+observation: the columns comprises of numerical, integer, and character data types.
+
+### checking the dataset dimension.
+```{r}
+# dimension
+dim(my_dataset)
+```
+observation: there is 1000 columns and 10 rows
+
+### checking our dataset class
+```{r}
+class(my_dataset)
+```
+
+
+### dataset summary 
+```{r}
+summary(my_dataset)
+```
+observation, we are able to get precise summary of all our dataset columns, this will be detailed in analysis section.However, we will still check for missing values 
+
+## 3.0 Data cleaning
+#
+###3.0a missing values
+```{r}
+# Identify missing data in our entire dataset using is.na() function
+#
+is.na(my_dataset)
+
+```
+observation: there is no missing values as all the result returns False result.However, we will use another method to ascertain the above.
+
+
+###3.0b Checking for missing values using the complete function
+```{r}
+# using complete function 
+my_dataset[!complete.cases(my_dataset),]
+```
+observation: we got 0 row output, and all columns are complete hence no missing values.
+
+
+###3.0c Finding out total missing values in each column 
+```{r}
+#Rechecking the sum of missing values to ascertain the above finding
+#
+colSums(is.na(my_dataset))
+```
+observation: we can confirm there is no missing values in our dataset.
+
+### 3.1a Duplicated Data
+```{r}
+#Identifying Duplicated Data
+#
+duplicated_rows <- my_dataset[duplicated(my_dataset),]
+duplicated_rows
+
+```
+observation, there is no duplicated rows
+
+### 3.1b showing unique items
+```{r}
+#showing these unique items
+#
+unique_items <- my_dataset[!duplicated(my_dataset), ]
+unique_items
+
+```
+observation: these shows the unique items hence no duplicated rows.
+
+
+###3.2 Outliers
+
+### installing outlier package and library
+```{r}
+# installing outlier package
+install.packages("outliers")
+#
+library(outliers)
+```
+
+
+###3.2a Identifying the numeric class in the data and evaluating if there are any outliers
+
+```{r}
+#Checking the data types of the columns
+#
+Numeric<- my_dataset %>% select_if(is.numeric)
+Numeric
+
+```
+
+
+observation: these columns have numeric datatyp:Daily Time Spent on site,Age,Area,Income,Daily Internet Usage,gender and whether the individual clicked on the add
+
+
+##3.2a Identifying the numeric class in the data 
+```{r}
+#Checking the data types of the columns
+Categorical=my_dataset %>% select_if(is.character)
+Categorical
+```
+observation: these columns have character datatype:Ad topic line,City,Country and Timestamp
+
+
+
+### 3.2b Checking for outliers
+```{r}
+#checking outliers in numerical colunms
+#
+outlier(Numeric)
+```
+observation, there is outliers in all the numerical columns.However, we will check each column separately. 
+
+
+```{r}
+#3.2bi. Checking the outliers in the 'Daily.Time.Spent.on.Site' Column.
+#
+boxplot(my_dataset$Daily.Time.Spent.on.Site, main= "Daily.Time.Spent.on.Site boxplot",ylab="Daily.Time.Spent.on.Site", boxwex=0.2)
+```
+observation, there is no outlier in Daily.Time.Spent.on.Site colunm.
+
+
+```{r}
+#3.2bii. Checking the outliers in the 'Age' Column  using univariate approach
+#
+boxplot(my_dataset$Age, main="Age boxplot",ylab = "Age", boxwex=0.2)
+```
+observation, there is no outlier in Age column
+
+
+```{r}
+#3.2biii. Checking the outliers in the 'Area.Income' Column  using univariate approach
+#
+boxplot(my_dataset$Area.Income, main="Area.Income boxplot",ylab = "Area.Income", boxwex=0.2)
+```
+observation: using boxplot shows outliers, we will use ggplot2 for further analysis.
+
+
+###3.3a installing the ggplot2 package and library
+```{r}
+#3.3ai installing ggplot2 package for visualization.
+install.packages('ggplot2')
+#
+#installing ggplot2 library
+#
+library(ggplot2)
+#
+#note: the above  have been installed in the console section.
+```
+
+```{r}
+#visualizing the colunm to check for outliers
+ggplot2::qplot(data = my_dataset, x = Area.Income)
+```
+```{r}
+#checking for outlier
+outlier_value <-boxplot.stats(my_dataset$Area.Income)$out
+outlier_value
+```
+observation, there is outliers however this might be genuine thus we will not remove them since it is not extreme.
+
+
+```{r}
+#3.2bii. Checking the outliers in the 'Daily.Internet.Usage' Column  using univariate approach
+#
+boxplot(my_dataset$Daily.Internet.Usage, main="Daily.Internet.Usage boxplot",ylab = "Daily.Internet.Usage", boxwex=0.2)
+```
+observation, there is no outliers in Daily.Internet.Usage columns.
+
+
+## 4.0 Univariate Analysis
+
+### 4.1 univariate Analysis for Numerical Data
+```{r}
+#previewing the data types of the columns
+#
+Numeric
+```
+
+###4.1a checking for measure of central tedency
+
+we will compute mean, median,maximum, range, quantile, variance, std, & boxplots for each numeric column
+#
+
+#4.1b central tedency for 'Daily.Time.Spent.on.Site' colunm 
+```{r}
+#Finding the mean
+DTS_m<-mean(my_dataset$Daily.Time.Spent.on.Site)
+print(DTS_m)
+#Finding the median
+DTS_m1<-median(my_dataset$Daily.Time.Spent.on.Site)
+print(DTS_m1)
+#Finding the maximum value in the Daily Time Spent on Site column
+DTS_Max<-max(my_dataset$Daily.Time.Spent.on.Site)
+print(DTS_Max)
+#Finding the minimum value in the Daily Time Spent on Site column
+DTS_Min<-min(my_dataset$Daily.Time.Spent.on.Site)
+print(DTS_Min)
+#Finding the range value of the Daily Time Spent on Site column
+DTS_Range<-range(advertising_dataset$Daily.Time.Spent.on.Site)
+print(DTS_Range)
+#Finding the variance of the Daily Time Spent on Site column
+DTS_Variance<-var(my_dataset$Daily.Time.Spent.on.Site)
+print(DTS_Variance)
+#Finding the standard deviation of the Daily Time Spent on Site column
+DTS_Sd<-sd(my_dataset$Daily.Time.Spent.on.Site)
+print(DTS_Sd)
+```
+###4.1c creating mode() function.
+```{r}
+# We create the mode function that will perform our mode operation for us
+getmode <- function(v) {
+   uniqv <- unique(v)
+   uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+#
+#finding the mode
+DTS.Mode<-getmode(my_dataset$Daily.Time.Spent.on.Site)
+DTS.Mode
+
+```
+### 4.1d finding quantile for 'Time.Spent.on.Site' variable
+```{r}
+DTS_quantile <- quantile(my_dataset$Daily.Time.Spent.on.Site)
+DTS_quantile
+```
+### 4.1e "Daily.Time.Spent.on.Site" variable histogram
+```{r}
+#Checking the distribution of Daily Time Spent on Site
+hist(my_dataset$Daily.Time.Spent.on.Site)
+```
+observation: 80 daily time spend on the side registered higher records.
+
+note: boxplot was already plotted earlier while checking for outliers.
+
+
+### 4.1c central tedency for Age colunm 
+```{r}
+#Finding the mean
+Age_m<-mean(my_dataset$Age)
+print(Age_m)
+#Finding the median
+Age_m1<-median(my_dataset$Age)
+print(Age_m1)
+#Finding the maximum value in the age column
+Age_Max<-max(my_dataset$Age)
+print(Age_Max)
+#Finding the minimum value in the age column
+Age_Min<-min(my_dataset$Age)
+print(Age_Min)
+#Finding the range value of the age column
+Age_Range<-range(my_dataset$Age)
+print(Age_Range)
+#Finding the variance of the age column
+Age_Variance<-var(my_dataset$Age)
+print(Age_Variance)
+#Finding the standard deviation of the age column
+Age_Sd<-sd(my_dataset$Age)
+print(Age_Sd)
+```
+###
+```{r}
+#finding the mode## mode function was created in the console section to avoid several installation.
+Age_Mode<-getmode(my_dataset$Age)
+Age_Mode
+
+```
+```{r}
+#4.2d finding quantile for 'Age' variable
+Age_Mode<-quantile(my_dataset$Age)
+Age_Mode
+```
+
+###4.2e "Age" variable histogram
+```{r}
+#Checking the distribution of Age
+hist(my_dataset$Age)
+```
+observation: 30 to 35 years registered high records.
+
+note: boxplot was done under outlier checking.
+
+
+### 4.3a central tedency for Area.Income colunm 
+```{r}
+#Finding the mean
+AI_m<-mean(my_dataset$Area.Income)
+print(AI_m)
+#
+#Finding the median
+AI_m1<-median(my_dataset$Area.Income)
+print(AI_m1)
+#
+#Finding the maximum value in the Area Income column
+AI_Max<-max(my_dataset$Area.Income)
+print(AI_Max)
+#
+#Finding the minimum value in the Area Income column
+AI_Min<-min(my_dataset$Area.Income)
+print(AI_Min)
+#
+#Finding the range value of the Area Income column
+AI_Range<-range(my_dataset$Area.Income)
+print(AI_Range)
+#
+#Finding the variance of the Area Income column
+AI_Variance<-var(my_dataset$Area.Income)
+print(AI_Variance)
+#
+#Finding the standard deviation of the  Area Income column
+AI_Sd<-sd(my_dataset$Area.Income)
+print(AI_Sd)
+#
+#Finding the mode of the Area Income colunm
+AI_Mode<-getmode(my_dataset$Area.Income)
+print(AI_Mode)
+#
+#finding the quantile the Area Income colunm
+AI_quantile<- quantile(my_dataset$Area.Income)
+print(AI_quantile)
+```
+
+###4.3b "Area Income" variable histogram
+```{r}
+#Checking the distribution of Area Income
+hist(my_dataset$Area.Income)
+```
+observation: hing records were between 50000 and 70000 area income.
+
+note: boxplot was used in outlier section.
+
+#
+### 4.4a central tedency for Daily.Internet.Usage colunm 
+```{r}
+#Finding the mean
+DIU_m<-mean(my_dataset$Daily.Internet.Usage)
+print(DIU_m)
+#Finding the median
+DIU_m1<-median(my_dataset$Daily.Internet.Usage)
+print(DIU_m1)
+#Finding the maximum value in the Daily Internet Usage column
+DIU_Max<-max(my_dataset$Daily.Internet.Usage)
+print(DIU_Max)
+#Finding the minimum value in the Daily Internet Usage column
+DIU_Min<-min(my_dataset$Daily.Internet.Usage)
+print(DIU_Min)
+#Finding the range value of the Daily Internet Usagecolumn
+DIU_Range<-range(my_dataset$Daily.Internet.Usage)
+print(DIU_Range)
+#Finding the variance of the Daily Internet Usage column
+DIU_Variance<-var(my_dataset$Daily.Internet.Usage)
+print(DIU_Variance)
+#Finding the standard deviation Daily Internet Usage column
+DIU_Sd<-sd(my_dataset$Daily.Internet.Usage)
+print(DIU_Sd)
+#Finding the mode of the Daily internet usage colunm
+DIU_Mode<-getmode(my_dataset$Daily.Internet.Usage)
+print(DIU_Mode)
+#
+#finding the quantile the Daily internet usage colunm
+DIU_quantile<- quantile(my_dataset$Daily.Internet.Usage)
+print(DIU_quantile)
+```
+###4.3b "Daily.Internet.Usage" variable histogram
+```{r}
+#Checking the distribution of Daily internet Usage
+hist(my_dataset$Daily.Internet.Usage)
+```
+observation: high records were witnessed at 125mbs and 225mbs daily internet usage.
+
+Note: despite Male, and Clicked.on.Ad variables are categorical despite being under numerical datatypes.
+
+
+### 4.5 summary statistics of the numerical variables
+```{r}
+#Getting the summary statistics of the numeric variables.
+summary(Numeric)
+```
+
+###  5.0 univariate Analysis for categorical Variable
+
+```{r}
+#Checking the data types of the categorical columns
+Categorical=my_dataset %>% select_if(is.character)
+Categorical
+```
+
+###5.1a "Male" variable frequencty barplot
+```{r}
+Gender <- my_dataset$Male
+Gender_frequency<- table(Gender)
+Gender_frequency
+barplot(Gender_frequency,xlab ="gender", ylab = "browsing individuals", col="beige")
+```
+observation: Out of the 1,000 browsing individuals,519 were female whereas 481 were male
+
+
+###5.1b "Clicked.on.Ad" variable frequencty barplot
+
+```{r}
+Clicked <- my_dataset$Clicked.on.Ad
+Clicked_frequency<- table(Clicked)
+Clicked_frequency
+barplot(Clicked_frequency,xlab ="Clicked.on.Ad", ylab = "clicking individuals", col="brown")
+```
+observation: Out of the 1,000 browsing individuals,500 people clicked on the advert whereas an equal number did not click the ad.
+
+
+###5.1c "Country" variable frequencty barplot
+```{r}
+Country <- my_dataset$Country
+Country_frequency<- table(Country)
+Country_frequency
+barplot(Country_frequency,xlab ="Country", col="yellow")
+```
+
+###5.1d "Country" variable frequencty barplot
+```{r}
+City <- my_dataset$City
+City_frequency<- table(City)
+City_frequency
+barplot(City_frequency,xlab ="City", col="grey")
+```
+
+###5.1e "Topic.Line" variable frequencty barplot
+
+```{r}
+Topic <- my_dataset$Ad.Topic.Line
+Topic_frequency<- table(Topic)
+Topic_frequency
+```
+
+### 6.0 Bivariate and Multivariate Analysis
+This looks at the relation between 2 or more variable.
+
+we will handle covariance,correlation coefficient, and scatter plots
+
+
+###6.1 covariance between age and the daily time spent on site
+```{r}
+#Checking the covariance between age and the daily time spent on site
+#
+## Assigning the Age column to the variable Age
+Age<-my_dataset$Age
+#
+#assigning Daily.Time.Spent.on.Site colunm to variable DTSS
+DTSS<-my_dataset$Daily.Time.Spent.on.Site
+#
+#Using the cov() function to determine the covariance
+cov(Age,DTSS)
+```
+observation, The covariance of Age and Daily.Time.Spent.on.Site variable is about -46.175,It indicates a negative linear relationship between the two variables
+
+
+###6.2 covariance between age and Daily.Internet.Usage
+```{r}
+#Checking the covariance between age and the daily time spent on site
+#
+## Assigning the Age column to the variable Age
+Age<-my_dataset$Age
+#
+#assigning Daily.Internet.Usage colunm to variable DIU
+DIU<-my_dataset$Daily.Internet.Usage
+#
+#Using the cov() function to determine the covariance
+cov(Age,DIU)
+```
+observation. The covariance of Age and Daily.Internet.Usage variable is about -141.635, It indicates a negative linear relationship between the two variables
+
+
+###6.3 covariance between age and  Area Income
+```{r}
+#Checking the covariance between age and the daily time spent on site
+#
+## Assigning the Age column to the variable Age
+Age<-my_dataset$Age
+#
+#assigning  Area Income colunm to variable income
+income<-my_dataset$Area.Income
+#
+#Using the cov() function to determine the covariance
+cov(Age,income)
+```
+observation: The covariance of Age and Daily.Internet.Usage variable is about -21520.93, It indicates a negative linear relationship between the two variables
+
+
+###6.4 covariance between Daily Time Spent on Site and the Daily Internet Usage
+```{r}
+#Using the cov() function to determine the covariance
+cov(DTSS,DIU)
+```
+observation: The higher the Daily Time Spent on Site the higher the Daily Internet Usage-Positive Covariance
+
+#
+###6.5 covariance between gender and Clicked.on.Ad
+```{r}
+#Using the cov() function to determine the covariance
+cov(Gender,Clicked)
+```
+###6.6 covariance between Clicked.on.Ad and age
+```{r}
+#Using the cov() function to determine the covariance
+cov(Clicked,Age)
+```
+###6.7 covariance between Clicked.on.Ad and Daily.Time.Spent.on.Site
+```{r}
+#Using the cov() function to determine the covariance
+cov(Clicked,DTSS)
+```
+###6.8 covariance between Clicked.on.Ad and Daily.Internet.Usage
+```{r}
+#Using the cov() function to determine the covariance
+cov(Clicked,DIU)
+```
+###6.9 covariance between Clicked.on.Ad and Area income
+```{r}
+#Using the cov() function to determine the covariance
+cov(Clicked,income)
+```
+###6.9 covariance for numerical colunms
+```{r}
+#Using the cov() function to determine the covariance
+cov(Numeric)
+```
+
+
+observations:
+
+There are positive covariances between the following variables 
+
+1.Area Income and Daily Time Spent on Site 
+
+2.Age and Clicking on the Advert. 
+
+3.Area Income and Daily Internet Usage. 
+
+4.Area Income and Male 
+
+5.Daily Internet Usage and Daily Time Spent on Site 
+
+6.Male and Daily Internet Usage 
+
+7.Clicked on Advert and Age
+
+The rest of the variables exhibit negative Covariances.
+
+
+### 7.0 Correlation
+
+### 7.1 correlation between age and Daily Time Spent on Site
+```{r}
+cor(Age,DTSS)
+```
+### 7.2 correlation between age and Daily Internet Usage
+```{r}
+cor(Age,DIU)
+```
+### 7.3 correlation between age and income
+```{r}
+cor(Age,income)
+```
+
+### 7.4 correlation between age and Clicked on Advert
+```{r}
+cor(Age,Clicked)
+```
+### 7.5 correlation between Daily Time Spent on Site and Daily Internet Usage
+```{r}
+cor(DTSS,DIU)
+```
+### 7.6 correlation between Gender and Clicked on Advert
+```{r}
+cor(Gender,Clicked)
+```
+### 7.7 correlation between Gender and Daily Time Spent on Site
+```{r}
+cor(Gender,DTSS)
+```
+### 7.8 correlation between Gender and  Daily internet usage
+```{r}
+cor(Gender,DIU)
+```
+### 7.9 correlation between Clicked on Advert and area income
+```{r}
+cor(Clicked,income)
+```
+###7.10 correlation for numerical colunms
+```{r}
+#Using the cov() function to determine the covariance
+cor(Numeric)
+```
+Observations:
+
+There are negative correlations between the following variables 1.Area Income and Daily Time Spent on Site 2.Male and Daily Time Spent on Site 3.Clicking on the Advert and Daily Time Spent on Site. 4.Area Income and Age 5.Daily Internet Usage and Age 6.Male and Age 7.Area Income and Age 8.Area Income and Clicking on the Advert 9.Daily Internet usage and Clicking on the advert. 10.Male and Clicking on the Advert
+
+There are positive Correlations between the following variables: 1.Age and Clicking on the advert 2.Male and Daily Internet Usage 3.Male and Area Income 4.Daily Time Spent on Site and Daily Internet Usage. 5.Area Income and Daily Time Spent on Site 6.Area Income and Daily Internet Usage 7.Area Income and Male 8.Age and Clicking on the Advert.
+
+
+
+## 8.0 scatter plots
+
+
+###8.1 age and time spend on the site variable scatter plot
+```{r}
+#Using the plot() function to determine the relation 
+#
+plot(Age, DTSS, xlab="Age of the Individual", ylab="Time spent on the site")
+```
+###8.2 age and Daily internate usage scatter plot
+```{r}
+#Using the plot() function to determine the relation 
+#
+plot(Age, DIU, xlab="Age of the Individual", ylab="Internet Usage")
+```
+###8.3 age and area income variable scatter plot
+```{r}
+#Using the plot() function to determine the relation 
+#
+plot(Age, income, xlab="Age of the Individual", ylab="Area Income")
+```
+###8.4 age and clicked on advert variable scatter plot
+```{r}
+#Using the plot() function to determine the relation 
+#
+plot(Age, Clicked, xlab="Age of the Individual", ylab="Clicked on the Ad")
+```
+###8.5 gender and area income variable scatter plot
+```{r}
+#Using the plot() function to determine the relation 
+#
+plot(Gender, income, xlab="Gender of the Individual", ylab="Area Income")
+```
+
+###8.6 gender and daily internet usage variable scatter plot
+```{r}
+#Using the plot() function to determine the relation 
+#
+plot(Gender, DIU, xlab="Gender of the Individual", ylab="Internet Usage")
+```
+
+###8.7 gender and daily  time spent on site variable scatter plot
+```{r}
+#Using the plot() function to determine the relation 
+#
+plot(Gender, DTSS, xlab="Gender of the Individual", ylab="Time Spent on Site")
+```
+###8.8 income and daily internet usage variable scatter plot
+```{r}
+#Using the plot() function to determine the relation 
+#
+plot(income, DIU, xlab="Income of the Area", ylab="Internet Usage")
+```
+###8.9 income and daily time spent on site variable scatter plot
+```{r}
+#Using the plot() function to determine the relation 
+#
+plot(income, DTSS, xlab="Income of the Area", ylab="Time Spent on Site")
+```
+## 9.0 observations: 
+
+The data was clean and complete i.e. contained no outliers and no missing values.
+
+The modal age was 31 years and the range was between 19 and 61.
+
+Most of the individuals spent around 62.26 Minutes on the site.The time ranged from 32.60 minutes to 91.43.
+
+The Average Area Income of the individuals was 55,000 which ranged between 13,996.5 and 79,484.80
+
+The Daily Internet Usage had an average of 180 Mbs and ranged between 104.78 and 269.96
+
+The most frequent cities were; Lake Faith and West Ryan
+
+The most frequent Countries were; Turkey and Australia.
+
+There were positive covariances between the following variables 1.Area Income and Daily Time Spent on Site 2.Age and Clicking on the Advert. 3.Area Income and Daily Internet Usage. 4.Area Income and Male 5.Daily Internet Usage and Daily Time Spent on Site 6.Male and Daily Internet Usage 7.Clicked on Advert and Age
+
+The rest of the variables exhibit negative Covariances.
+
+The number of females was more than that of male counterparts.
+
+The number of individuals who clicked on the advert and those who didn't were equal at 500.
+
+There are negative correlations between the following variables 1.Area Income and Daily Time Spent on Site 2.Male and Daily Time Spent on Site 3.Clicking on the Advert and Daily Time Spent on Site. 4.Area Income and Age 5.Daily Internet Usage and Age 6.Male and Age 7.Area Income and Age 8.Area Income and Clicking on the Advert 9.Daily Internet usage and Clicking on the advert. 10.Male and Clicking on the Advert
+
+There were positive Correlations between the following variables: 1.Age and Clicking on the advert 2.Male and Daily Internet Usage 3.Male and Area Income 4.Daily Time Spent on Site and Daily Internet Usage. 5.Area Income and Daily Time Spent on Site 6.Area Income and Daily Internet Usage 7.Area Income and Male 8.Age and Clicking on the Advert.
+
+
+## 10.0 Conclusion
+
+After analysis, we conclude that following characteristics would help identify an individual who would click on the ad:
+
+1. Daily Time Spent on Site-the higher the time the lower the chances of clicking.
+
+2.  Age-The higher the Age the Higher the chances.
+
+3. Area Income-The lower the income the higher the chances.
+
+3.  Internet Usage-The lower the Internet Usage the higher the chances.
+
+## 10.1 Recommendation
+
+It was hard to analyze the Ad Topic Line column as it had various different themes.
+for effective analysis, the major themes should be identified and used on the rest.
+
+## 11.0 Follow up questions
+
+### 11. 1 Did we have the right data?
+
+Yes
+
+### 11.2 Do we need other data to answer our question?
+
+No
+
+### 11.3 Did we have the right question?
+
+yes
+
+
